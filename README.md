@@ -1,5 +1,5 @@
 # nim-edlib
-Nim wrapper for edlib (Martin Šošić)
+Nim wrapper for [edlib](https://github.com/Martinsos/edlib) (Martin Šošić)
 
 ## Requirements
 
@@ -12,3 +12,7 @@ Nim wrapper for edlib (Martin Šošić)
 ## Versions
 
 * `edlib-1.2.6` is the first version we ran **c2nim** on.
+
+## References
+
+* https://github.com/Martinsos/edlib

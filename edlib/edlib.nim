@@ -236,5 +236,3 @@ proc edlibAlign*(query: cstring; queryLength: cint; target: cstring;
 proc edlibAlignmentToCigar*(alignment: ptr cuchar; alignmentLength: cint;
                            cigarFormat: EdlibCigarFormat): cstring {.cdecl,
     importc: "edlibAlignmentToCigar", header: "edlib.h".}
-proc hello*() =
-  echo "hello from edlib"
