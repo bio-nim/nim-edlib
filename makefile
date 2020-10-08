@@ -1,9 +1,4 @@
-F=--debugger:native
+I=../../edlib/edlib/include
 
-try: foo.exe
-	./foo.exe
-go:
-	c2nim --header ../edlib/include/edlib.h --cdecl --out:edlib.nim
-
-foo.exe: foo.nim
-	nim cpp $F -o:foo.exe foo.nim
+regen:
+	c2nim --header $I/edlib.h --cdecl --out:edlib/edlib.nim
