@@ -8,3 +8,7 @@ Nim wrapper for edlib (Martin Šošić)
 * `pkg-config`
 * "edlib" installed
   * We use `pkg-config --cflags edlib`
+
+## Versions
+
+* `edlib-1.2.6` is the first version we ran **c2nim** on.
