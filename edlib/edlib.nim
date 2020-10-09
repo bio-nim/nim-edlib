@@ -1,5 +1,13 @@
-{.passC: gorge("pkg-config --cflags edlib").}
-{.passL: gorge("pkg-config --libs edlib").}
+ {.deadCodeElim: on.}
+when defined(windows):
+  const
+    libname* = "libedlib.dll"
+elif defined(macosx):
+  const
+    libname* = "libedlib.dylib"
+else:
+  const
+    libname* = "libedlib.so"
 ## *
 ##  @file
 ##  @author Martin Sosic
@@ -78,9 +86,9 @@ const
 ##
 
 type
-  EdlibEqualityPair* {.importc: "EdlibEqualityPair", header: "edlib.h", bycopy.} = object
-    first* {.importc: "first".}: char
-    second* {.importc: "second".}: char
+  EdlibEqualityPair* {.bycopy.} = object
+    first*: char
+    second*: char
 
 
 ## *
@@ -88,38 +96,38 @@ type
 ##
 
 type
-  EdlibAlignConfig* {.importc: "EdlibAlignConfig", header: "edlib.h", bycopy.} = object
-    k* {.importc: "k".}: cint ## *
-                          ##  Set k to non-negative value to tell edlib that edit distance is not larger than k.
-                          ##  Smaller k can significantly improve speed of computation.
-                          ##  If edit distance is larger than k, edlib will set edit distance to -1.
-                          ##  Set k to negative value and edlib will internally auto-adjust k until score is found.
-                          ##
+  EdlibAlignConfig* {.bycopy.} = object
+    k*: cint ## *
+           ##  Set k to non-negative value to tell edlib that edit distance is not larger than k.
+           ##  Smaller k can significantly improve speed of computation.
+           ##  If edit distance is larger than k, edlib will set edit distance to -1.
+           ##  Set k to negative value and edlib will internally auto-adjust k until score is found.
+           ##
     ## *
     ##  Alignment method.
     ##  EDLIB_MODE_NW: global (Needleman-Wunsch)
     ##  EDLIB_MODE_SHW: prefix. Gap after query is not penalized.
     ##  EDLIB_MODE_HW: infix. Gaps before and after query are not penalized.
     ##
-    mode* {.importc: "mode".}: EdlibAlignMode ## *
-                                          ##  Alignment task - tells Edlib what to calculate. Less to calculate, faster it is.
-                                          ##  EDLIB_TASK_DISTANCE - find edit distance and end locations of optimal alignment paths in target.
-                                          ##  EDLIB_TASK_LOC - find edit distance and start and end locations of optimal alignment paths in target.
-                                          ##  EDLIB_TASK_PATH - find edit distance, alignment path (and start and end locations of it in target).
-                                          ##
-    task* {.importc: "task".}: EdlibAlignTask ## *
-                                          ##  List of pairs of characters, where each pair defines two characters as equal.
-                                          ##  This way you can extend edlib's definition of equality (which is that each character is equal only
-                                          ##  to itself).
-                                          ##  This can be useful if you have some wildcard characters that should match multiple other characters,
-                                          ##  or e.g. if you want edlib to be case insensitive.
-                                          ##  Can be set to NULL if there are none.
-                                          ##
-    additionalEqualities* {.importc: "additionalEqualities".}: ptr EdlibEqualityPair ## *
-                                                                                ##  Number of additional equalities, which is non-negative number.
-                                                                                ##  0 if there are none.
-                                                                                ##
-    additionalEqualitiesLength* {.importc: "additionalEqualitiesLength".}: cint
+    mode*: EdlibAlignMode ## *
+                        ##  Alignment task - tells Edlib what to calculate. Less to calculate, faster it is.
+                        ##  EDLIB_TASK_DISTANCE - find edit distance and end locations of optimal alignment paths in target.
+                        ##  EDLIB_TASK_LOC - find edit distance and start and end locations of optimal alignment paths in target.
+                        ##  EDLIB_TASK_PATH - find edit distance, alignment path (and start and end locations of it in target).
+                        ##
+    task*: EdlibAlignTask ## *
+                        ##  List of pairs of characters, where each pair defines two characters as equal.
+                        ##  This way you can extend edlib's definition of equality (which is that each character is equal only
+                        ##  to itself).
+                        ##  This can be useful if you have some wildcard characters that should match multiple other characters,
+                        ##  or e.g. if you want edlib to be case insensitive.
+                        ##  Can be set to NULL if there are none.
+                        ##
+    additionalEqualities*: ptr EdlibEqualityPair ## *
+                                              ##  Number of additional equalities, which is non-negative number.
+                                              ##  0 if there are none.
+                                              ##
+    additionalEqualitiesLength*: cint
 
 
 ## *
@@ -130,61 +138,61 @@ type
 proc edlibNewAlignConfig*(k: cint; mode: EdlibAlignMode; task: EdlibAlignTask;
                          additionalEqualities: ptr EdlibEqualityPair;
                          additionalEqualitiesLength: cint): EdlibAlignConfig {.
-    cdecl, importc: "edlibNewAlignConfig", header: "edlib.h".}
+    cdecl, importc: "edlibNewAlignConfig", dynlib: libname.}
 ## *
 ##  @return Default configuration object, with following defaults:
 ##          k = -1, mode = EDLIB_MODE_NW, task = EDLIB_TASK_DISTANCE, no additional equalities.
 ##
 
 proc edlibDefaultAlignConfig*(): EdlibAlignConfig {.cdecl,
-    importc: "edlibDefaultAlignConfig", header: "edlib.h".}
+    importc: "edlibDefaultAlignConfig", dynlib: libname.}
 ## *
 ##  Container for results of alignment done by edlibAlign() function.
 ##
 
 type
-  EdlibAlignResult* {.importc: "EdlibAlignResult", header: "edlib.h", bycopy.} = object
-    status* {.importc: "status".}: cint ## *
-                                    ##  EDLIB_STATUS_OK or EDLIB_STATUS_ERROR. If error, all other fields will have undefined values.
-                                    ##
+  EdlibAlignResult* {.bycopy.} = object
+    status*: cint ## *
+                ##  EDLIB_STATUS_OK or EDLIB_STATUS_ERROR. If error, all other fields will have undefined values.
+                ##
     ## *
     ##  -1 if k is non-negative and edit distance is larger than k.
     ##
-    editDistance* {.importc: "editDistance".}: cint ## *
-                                                ##  Array of zero-based positions in target where optimal alignment paths end.
-                                                ##  If gap after query is penalized, gap counts as part of query (NW), otherwise not.
-                                                ##  Set to NULL if edit distance is larger than k.
-                                                ##  If you do not free whole result object using edlibFreeAlignResult(), do not forget to use free().
-                                                ##
-    endLocations* {.importc: "endLocations".}: ptr cint ## *
-                                                   ##  Array of zero-based positions in target where optimal alignment paths start,
-                                                   ##  they correspond to endLocations.
-                                                   ##  If gap before query is penalized, gap counts as part of query (NW), otherwise not.
-                                                   ##  Set to NULL if not calculated or if edit distance is larger than k.
-                                                   ##  If you do not free whole result object using edlibFreeAlignResult(), do not forget to use free().
-                                                   ##
-    startLocations* {.importc: "startLocations".}: ptr cint ## *
-                                                       ##  Number of end (and start) locations.
-                                                       ##
-    numLocations* {.importc: "numLocations".}: cint ## *
-                                                ##  Alignment is found for first pair of start and end locations.
-                                                ##  Set to NULL if not calculated.
-                                                ##  Alignment is sequence of numbers: 0, 1, 2, 3.
-                                                ##  0 stands for match.
-                                                ##  1 stands for insertion to target.
-                                                ##  2 stands for insertion to query.
-                                                ##  3 stands for mismatch.
-                                                ##  Alignment aligns query to target from begining of query till end of query.
-                                                ##  If gaps are not penalized, they are not in alignment.
-                                                ##  If you do not free whole result object using edlibFreeAlignResult(), do not forget to use free().
-                                                ##
-    alignment* {.importc: "alignment".}: ptr cuchar ## *
-                                               ##  Length of alignment.
-                                               ##
-    alignmentLength* {.importc: "alignmentLength".}: cint ## *
-                                                      ##  Number of different characters in query and target together.
-                                                      ##
-    alphabetLength* {.importc: "alphabetLength".}: cint
+    editDistance*: cint ## *
+                      ##  Array of zero-based positions in target where optimal alignment paths end.
+                      ##  If gap after query is penalized, gap counts as part of query (NW), otherwise not.
+                      ##  Set to NULL if edit distance is larger than k.
+                      ##  If you do not free whole result object using edlibFreeAlignResult(), do not forget to use free().
+                      ##
+    endLocations*: ptr cint ## *
+                         ##  Array of zero-based positions in target where optimal alignment paths start,
+                         ##  they correspond to endLocations.
+                         ##  If gap before query is penalized, gap counts as part of query (NW), otherwise not.
+                         ##  Set to NULL if not calculated or if edit distance is larger than k.
+                         ##  If you do not free whole result object using edlibFreeAlignResult(), do not forget to use free().
+                         ##
+    startLocations*: ptr cint   ## *
+                           ##  Number of end (and start) locations.
+                           ##
+    numLocations*: cint ## *
+                      ##  Alignment is found for first pair of start and end locations.
+                      ##  Set to NULL if not calculated.
+                      ##  Alignment is sequence of numbers: 0, 1, 2, 3.
+                      ##  0 stands for match.
+                      ##  1 stands for insertion to target.
+                      ##  2 stands for insertion to query.
+                      ##  3 stands for mismatch.
+                      ##  Alignment aligns query to target from begining of query till end of query.
+                      ##  If gaps are not penalized, they are not in alignment.
+                      ##  If you do not free whole result object using edlibFreeAlignResult(), do not forget to use free().
+                      ##
+    alignment*: ptr cuchar      ## *
+                        ##  Length of alignment.
+                        ##
+    alignmentLength*: cint ## *
+                         ##  Number of different characters in query and target together.
+                         ##
+    alphabetLength*: cint
 
 
 ## *
@@ -193,7 +201,7 @@ type
 ##
 
 proc edlibFreeAlignResult*(result: EdlibAlignResult) {.cdecl,
-    importc: "edlibFreeAlignResult", header: "edlib.h".}
+    importc: "edlibFreeAlignResult", dynlib: libname.}
 ## *
 ##  Aligns two sequences (query and target) using edit distance (levenshtein distance).
 ##  Through config parameter, this function supports different alignment methods (global, prefix, infix),
@@ -212,7 +220,7 @@ proc edlibFreeAlignResult*(result: EdlibAlignResult) {.cdecl,
 
 proc edlibAlign*(query: cstring; queryLength: cint; target: cstring;
                 targetLength: cint; config: EdlibAlignConfig): EdlibAlignResult {.
-    cdecl, importc: "edlibAlign", header: "edlib.h".}
+    cdecl, importc: "edlibAlign", dynlib: libname.}
 ## *
 ##  Builds cigar string from given alignment sequence.
 ##  @param [in] alignment  Alignment sequence.
@@ -235,4 +243,4 @@ proc edlibAlign*(query: cstring; queryLength: cint; target: cstring;
 
 proc edlibAlignmentToCigar*(alignment: ptr cuchar; alignmentLength: cint;
                            cigarFormat: EdlibCigarFormat): cstring {.cdecl,
-    importc: "edlibAlignmentToCigar", header: "edlib.h".}
+    importc: "edlibAlignmentToCigar", dynlib: libname.}
