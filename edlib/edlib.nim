@@ -1,5 +1,8 @@
-{.passC: gorge("pkg-config --cflags edlib").}
-{.passL: gorge("pkg-config --libs edlib").}
+from os import DirSep
+from strutils import rsplit
+const thisdir = system.currentSourcePath.rsplit(DirSep, 1)[0]
+{.passC: "-I" & thisdir.}
+{.compile: "edlib.cpp".}
 ## *
 ##  @file
 ##  @author Martin Sosic
