@@ -1,4 +1,4 @@
-I=../../edlib/edlib/include
+I=./edlib/
 
 regen:
-	c2nim --header $I/edlib.h --cdecl --out:edlib/edlib.nim
+	c2nim $I/edlib.h --out:edlib/edlib.nim

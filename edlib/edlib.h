@@ -1,3 +1,15 @@
+#ifdef C2NIM
+#  dynlib libname
+#  cdecl
+#  if defined(windows)
+#    define libname "libedlib.dll"
+#  elif defined(macosx)
+#    define libname "libedlib.dylib"
+#  else
+#    define libname "libedlib.so"
+#  endif
+#endif
+
 #ifndef EDLIB_H
 #define EDLIB_H
 
